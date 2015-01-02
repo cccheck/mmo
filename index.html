@@ -1,0 +1,102 @@
+<html>
+<head>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        $(function(){
+            var iosocket = io.connect();
+ 
+            iosocket.on('connect', function () {
+                $('#incomingChatMessages').append($('<li>Connected</li>'));
+ 
+                iosocket.on('message', function(message) {
+                    $('#incomingChatMessages').append($('<li></li>').text(message));
+                });
+                
+                iosocket.on('loginFail', function(message) {
+                    $('#incomingChatMessages').append($('<li>login failed</li>'));
+                });
+                
+                iosocket.on('loginSuccess', function(message) {
+                  
+                  $('#gameArea').mousedown(function(event) {
+                    event.preventDefault();
+                    switch (event.which) {
+                    case 1:
+                        iosocket.emit('leftclick',{x:event.pageX,y:event.pageY});
+                        break;
+                    case 3:
+                        iosocket.emit('rightclick',{x:event.pageX,y:event.pageY});
+                        break;
+                    default:
+                        //alert('You have a strange Mouse!');
+                    } 
+                  });
+
+                  iosocket.on('update', function(message) {
+                    
+                    for(var n=0; n < message.length; n++)
+                    {
+                      if(message[n].type == 'block')
+                      {
+                        $('#gameArea').append($('<div class="'+message[n].type+'" style="position:absolute;left:'+message[n].x+';top:'+message[n].y+';width:'+(message[n].tileSize-1)+'px;height:'+(message[n].tileSize-1)+'px;background:black; background-color:'+message[n].color+'; border:1px solid white;"></div>'))
+                        //$('#incomingChatMessages').append($('<li></li>').text('+++map+++'));
+                      }
+                      else if(message[n].type == 'actor')
+                      {
+                        $('#gameArea').append($('<div id="'+message[n].name+'" style="position:absolute;left:'+message[n].x+';top:'+message[n].y+';width:'+message[n].width+'px;height:'+message[n].height+'px;background:black; transition-property:left, top; transition-duration:500; transition-timing-function:linear;"></div>'))
+                        //$('#incomingChatMessages').append($('<li></li>').text('+++player+++'));
+                      }
+                      else if(message[n].type == 'update')
+                      {
+                        $('#'+message[n].name).css("left",message[n].x);
+                        $('#'+message[n].name).css("top",message[n].y);
+                      }
+                     else if(message[n].type == 'kill')
+                      {
+                        $('#'+message[n].name).remove();
+                      }
+                    }
+                  });
+                
+                });
+                iosocket.on('disconnect', function() {
+                    //$('#gameArea').remove();
+                    //$('#incomingChatMessages').append('<li>Disconnected</li>');
+                    window.location.reload();
+                });
+            });
+ 
+             $('#login').keypress(function(event) {
+                if(event.which == 13) {
+                    event.preventDefault();
+                    iosocket.emit('login',$('#login').val());
+                }
+            });
+ 
+
+ 
+ /*
+            $('#outgoingChatMessage').keypress(function(event) {
+                if(event.which == 13) {
+                    event.preventDefault();
+                    iosocket.send($('#outgoingChatMessage').val());
+                    $('#incomingChatMessages').append($('<li></li>').text($('#outgoingChatMessage').val()));
+                    $('#outgoingChatMessage').val('');
+                }
+            });
+    */
+        });
+    </script>
+</head>
+<body OnLoad="$('#login').focus();">
+
+  <div style="position:fixed; width:200px; top:0px; right:0px; height:100%; border-left:1px solid grey;" >
+    <input type="text" id="login">
+    <ul id="incomingChatMessages"></ul>
+  </div>
+
+  <div id="gameArea" oncontextmenu="return false;" style="position:fixed; left:0px; top:0px; overflow:hidden; width:600px; height:600px; background:grey;"></div>
+  
+</body>
+</html>
