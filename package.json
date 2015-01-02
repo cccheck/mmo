@@ -1,0 +1,8 @@
+{
+     "name": "node_socket",
+     "description": "real-time game plattform for node.js",
+     "version": "0.1",
+     "dependencies": {
+        "socket.io": "0.8.4"
+     }
+}
